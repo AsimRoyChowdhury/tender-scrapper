@@ -3,7 +3,7 @@ require('dotenv').config();
 
 
 (async () => {
-  const token = process.env.GITHUB_TOKEN;
+  const token = process.env.TOKEN;
   const gistId = process.env.GIST_ID;
 
   const { Octokit } = await import("@octokit/core");
