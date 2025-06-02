@@ -27,4 +27,7 @@ jobs:
         run: npx playwright install  # or skip if not needed
 
       - name: Run scrape.js
+        env:
+            TOKEN: ${{ secrets.TOKEN }}
+            GIST_ID: ${{ secrets.GIST_ID }}
         run: node scrape.js
