@@ -12,6 +12,6 @@
   "dependencies": {
     "@octokit/core": "^7.0.2",
     "dotenv": "^16.5.0",
-    "puppeteer": "^24.9.0"
+    "playwright-core": "^1.52.0"
   }
 }

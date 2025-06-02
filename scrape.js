@@ -1,34 +1,32 @@
-const puppeteer = require("puppeteer");
-require('dotenv').config();
-
+const { chromium } = require("playwright");
+require("dotenv").config();
 
 (async () => {
   const token = process.env.TOKEN;
   const gistId = process.env.GIST_ID;
+  const browserlesstoken = process.env.BROWSERLESS_TOKEN;
 
-  const { Octokit } = await import("@octokit/core");
-  const octokit = new Octokit({
-    auth: token,
-  });
+  // const { Octokit } = await import("@octokit/core");
+  // const octokit = new Octokit({ auth: token });
 
-  // 1. Scrape logic
-  const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+  const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage();
 
+  console.log("🚀 Launching browser...");
   await page.goto(
     "https://wbtenders.gov.in/nicgep/app?page=FrontEndTendersByOrganisation&service=page",
     {
-      waitUntil: "networkidle2",
+      waitUntil: "domcontentloaded",
+      timeout: 60000,
     }
   );
 
-  await page.waitForSelector("table.list_table");
+  console.log("✅ WB Tender Page loaded");
 
-  const orgs = await page.evaluate(() => {
-    const rows = document.querySelectorAll(
-      "table.list_table tr.odd, table.list_table tr.even"
-    );
-    return Array.from(rows).map((row) => {
+  await page.waitForSelector("table.list_table", { timeout: 15000 });
+
+  const orgs = await page.$$eval("table.list_table tr.odd, table.list_table tr.even", (rows) =>
+    rows.map((row) => {
       const cells = row.querySelectorAll("td");
       return {
         org: cells[1]?.innerText.trim(),
@@ -36,70 +34,59 @@ require('dotenv').config();
           "https://wbtenders.gov.in" +
           cells[2]?.querySelector("a")?.getAttribute("href"),
       };
-    });
-  });
+    })
+  );
+
+  console.log("🏢 Found organizations:", orgs.length);
 
   const allTenders = {};
 
   for (const org of orgs) {
     if (!org.link) continue;
 
-    if (org.org === "Zilla Parishad") {
-      await page.goto(org.link, { waitUntil: "networkidle2" });
-      await page.waitForSelector("table.list_table").catch(() => null);
+    try {
+      await page.goto(org.link, { waitUntil: "domcontentloaded", timeout: 60000 });
+      await page.waitForSelector("table.list_table", { timeout: 15000 });
 
-      const tenders = await page.evaluate(() => {
-        const rows = document.querySelectorAll(
-          "table.list_table tr.odd, table.list_table tr.even"
-        );
-        return Array.from(rows)
-          .map((row) => {
-            const cells = row.querySelectorAll("td");
-            const location = cells[5]?.innerText.trim().split("||")[2]?.trim();
-            const titleText = cells[4]?.innerText.trim();
-            const title = titleText?.split("] [")[0]?.slice(1) ?? "";
-            const tenderID = titleText?.split("][")[1]?.slice(0, -1) ?? "";
-            if (["PASCHIM BARDHAMAN", "BARDHAMAN"].includes(location)) {
+      const tenders = await page.$$eval(
+        "table.list_table tr.odd, table.list_table tr.even",
+        (rows, orgName) =>
+          Array.from(rows)
+            .map((row) => {
+              const cells = row.querySelectorAll("td");
+              const titleText = cells[4]?.innerText.trim() || "";
+              const title = titleText.split("] [")[0]?.slice(1) ?? "";
+              const tenderID = titleText.split("][")[1]?.slice(0, -1) ?? "";
+
+              if (orgName === "Zilla Parishad") {
+                const location = cells[5]?.innerText.trim().split("||")[2]?.trim();
+                if (!["PASCHIM BARDHAMAN", "BARDHAMAN"].includes(location)) return null;
+              }
+
               return {
-                title,
                 tenderID,
+                title,
                 closingdate: cells[2]?.innerText.trim(),
                 openingdate: cells[3]?.innerText.trim(),
               };
-            }
-          })
-          .filter(Boolean);
-      });
+            })
+            .filter(Boolean),
+        org.org
+      );
 
       allTenders[org.org] = tenders;
-    } else {
-      await page.goto(org.link, { waitUntil: "networkidle2" });
-      await page.waitForSelector("table.list_table").catch(() => null);
-
-      const tenders = await page.evaluate(() => {
-        const rows = document.querySelectorAll(
-          "table.list_table tr.odd, table.list_table tr.even"
-        );
-        return Array.from(rows).map((row) => {
-          const cells = row.querySelectorAll("td");
-          const titleText = cells[4]?.innerText.trim();
-          const title = titleText?.split("] [")[0]?.slice(1) ?? "";
-          const tenderID = titleText?.split("][")[1]?.slice(0, -1) ?? "";
-          return {
-            tenderID,
-            title,
-            closingdate: cells[2]?.innerText.trim(),
-            openingdate: cells[3]?.innerText.trim(),
-          };
-        });
-      });
-      allTenders[org.org] = tenders;
+      console.log(`✅ Scraped ${tenders.length} tenders from ${org.org}`);
+    } catch (err) {
+      console.warn(`⚠️ Failed to scrape ${org.org}:`, err.message);
+      allTenders[org.org] = [];
     }
   }
 
   await browser.close();
+  console.log("✅ Browser closed.");
+  console.log(allTenders);
 
-  // 2. Update Gist
+  // Optionally update Gist:
   await octokit.request("PATCH /gists/{gist_id}", {
     gist_id: gistId,
     description: "Latest WB tenders",
