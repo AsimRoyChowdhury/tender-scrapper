@@ -6,8 +6,8 @@ require("dotenv").config();
   const gistId = process.env.GIST_ID;
   const browserlesstoken = process.env.BROWSERLESS_TOKEN;
 
-  // const { Octokit } = await import("@octokit/core");
-  // const octokit = new Octokit({ auth: token });
+  const { Octokit } = await import("@octokit/core");
+  const octokit = new Octokit({ auth: token });
 
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage();
@@ -17,7 +17,7 @@ require("dotenv").config();
     "https://wbtenders.gov.in/nicgep/app?page=FrontEndTendersByOrganisation&service=page",
     {
       waitUntil: "domcontentloaded",
-      timeout: 60000,
+      timeout: 100000,
     }
   );
 
