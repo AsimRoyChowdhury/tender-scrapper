@@ -84,7 +84,6 @@ require("dotenv").config();
 
   await browser.close();
   console.log("✅ Browser closed.");
-  console.log(allTenders);
 
   // Optionally update Gist:
   await octokit.request("PATCH /gists/{gist_id}", {
