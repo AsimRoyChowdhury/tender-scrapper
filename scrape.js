@@ -4,7 +4,6 @@ require("dotenv").config();
 (async () => {
   const token = process.env.TOKEN;
   const gistId = process.env.GIST_ID;
-  const browserlesstoken = process.env.BROWSERLESS_TOKEN;
 
   const { Octokit } = await import("@octokit/core");
   const octokit = new Octokit({ auth: token });
@@ -12,78 +11,111 @@ require("dotenv").config();
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage();
 
-  console.log("🚀 Launching browser...");
-  await page.goto(
-    "https://wbtenders.gov.in/nicgep/app?page=FrontEndTendersByOrganisation&service=page",
-    {
-      waitUntil: "domcontentloaded",
-      timeout: 100000,
-    }
-  );
+  // console.log("🚀 Launching browser...");
+  // await page.goto(
+  //   "https://wbtenders.gov.in/nicgep/app?page=FrontEndTendersByOrganisation&service=page",
+  //   {
+  //     waitUntil: "domcontentloaded",
+  //     timeout: 100000,
+  //   }
+  // );
 
-  console.log("✅ WB Tender Page loaded");
+  // console.log("✅ WB Tender Page loaded");
 
-  await page.waitForSelector("table.list_table", { timeout: 15000 });
+  // await page.waitForSelector("table.list_table", { timeout: 15000 });
 
-  const orgs = await page.$$eval("table.list_table tr.odd, table.list_table tr.even", (rows) =>
-    rows.map((row) => {
-      const cells = row.querySelectorAll("td");
-      return {
-        org: cells[1]?.innerText.trim(),
-        link:
-          "https://wbtenders.gov.in" +
-          cells[2]?.querySelector("a")?.getAttribute("href"),
-      };
-    })
-  );
+  // const orgs = await page.$$eval("table.list_table tr.odd, table.list_table tr.even", (rows) =>
+  //   rows.map((row) => {
+  //     const cells = row.querySelectorAll("td");
+  //     return {
+  //       org: cells[1]?.innerText.trim(),
+  //       link:
+  //         "https://wbtenders.gov.in" +
+  //         cells[2]?.querySelector("a")?.getAttribute("href"),
+  //     };
+  //   })
+  // );
 
-  console.log("🏢 Found organizations:", orgs.length);
+  // console.log("🏢 Found organizations:", orgs.length);
 
-  const allTenders = {};
+  // const allTenders = {};
 
-  for (const org of orgs) {
-    if (!org.link) continue;
+  // for (const org of orgs) {
+  //   if (!org.link) continue;
 
-    try {
-      await page.goto(org.link, { waitUntil: "domcontentloaded", timeout: 60000 });
-      await page.waitForSelector("table.list_table", { timeout: 15000 });
+  //   try {
+  //     await page.goto(org.link, { waitUntil: "domcontentloaded", timeout: 60000 });
+  //     await page.waitForSelector("table.list_table", { timeout: 15000 });
 
-      const tenders = await page.$$eval(
-        "table.list_table tr.odd, table.list_table tr.even",
-        (rows, orgName) =>
-          Array.from(rows)
-            .map((row) => {
-              const cells = row.querySelectorAll("td");
-              const titleText = cells[4]?.innerText.trim() || "";
-              const title = titleText.split("] [")[0]?.slice(1) ?? "";
-              const tenderID = titleText.split("][")[1]?.slice(0, -1) ?? "";
+  //     const tenders = await page.$$eval(
+  //       "table.list_table tr.odd, table.list_table tr.even",
+  //       (rows, orgName) =>
+  //         Array.from(rows)
+  //           .map((row) => {
+  //             const cells = row.querySelectorAll("td");
+  //             const titleText = cells[4]?.innerText.trim() || "";
+  //             const title = titleText.split("] [")[0]?.slice(1) ?? "";
+  //             const tenderID = titleText.split("][")[1]?.slice(0, -1) ?? "";
 
-              if (orgName === "Zilla Parishad") {
-                const location = cells[5]?.innerText.trim().split("||")[2]?.trim();
-                if (!["PASCHIM BARDHAMAN", "BARDHAMAN"].includes(location)) return null;
-              }
+  //             if (orgName === "Zilla Parishad") {
+  //               const location = cells[5]?.innerText.trim().split("||")[2]?.trim();
+  //               if (!["PASCHIM BARDHAMAN", "BARDHAMAN"].includes(location)) return null;
+  //             }
 
-              return {
-                tenderID,
-                title,
-                closingdate: cells[2]?.innerText.trim(),
-                openingdate: cells[3]?.innerText.trim(),
-              };
-            })
-            .filter(Boolean),
-        org.org
-      );
+  //             return {
+  //               tenderID,
+  //               title,
+  //               closingdate: cells[2]?.innerText.trim(),
+  //               openingdate: cells[3]?.innerText.trim(),
+  //             };
+  //           })
+  //           .filter(Boolean),
+  //       org.org
+  //     );
 
-      allTenders[org.org] = tenders;
-      console.log(`✅ Scraped ${tenders.length} tenders from ${org.org}`);
-    } catch (err) {
-      console.warn(`⚠️ Failed to scrape ${org.org}:`, err.message);
-      allTenders[org.org] = [];
-    }
-  }
+  //     allTenders[org.org] = tenders;
+  //     console.log(`✅ Scraped ${tenders.length} tenders from ${org.org}`);
+  //   } catch (err) {
+  //     console.warn(`⚠️ Failed to scrape ${org.org}:`, err.message);
+  //     allTenders[org.org] = [];
+  //   }
+  // }
 
-  await browser.close();
-  console.log("✅ Browser closed.");
+  // await browser.close();
+  // console.log("✅ Browser closed.");
+
+  const allTenders = {
+    "Zilla Parishad": [
+      {
+        tenderID: "12345",
+        title: "Construction of Road",
+        closingdate: "2023-10-01",
+        openingdate: "2023-10-05",
+      },
+      {
+        tenderID: "67890",
+        title: "Supply of Materials",
+        closingdate: "2023-10-10",
+        openingdate: "2023-10-15",
+      },
+    ],
+    "Municipal Corporation": [
+      {
+        tenderID: "54321",
+        title: "Renovation of Park",
+        closingdate: "2023-11-01",
+        openingdate: "2023-11-05",
+      },
+    ],
+    "Github": [
+      {
+        tenderID: "54321",
+        title: "Renovation of Park",
+        closingdate: "2023-11-01",
+        openingdate: "2023-11-05",
+      },
+    ],
+  };
 
   // Optionally update Gist:
   await octokit.request("PATCH /gists/{gist_id}", {
