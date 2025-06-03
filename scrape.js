@@ -44,7 +44,7 @@ require("dotenv").config();
     if (!org.link) continue;
 
     try {
-      await page.goto(org.link, { waitUntil: "domcontentloaded", timeout: 60000 });
+      await page.goto(org.link, { waitUntil: "domcontentloaded", timeout: 100000 });
       await page.waitForSelector("table.list_table", { timeout: 15000 });
 
       const tenders = await page.$$eval(
