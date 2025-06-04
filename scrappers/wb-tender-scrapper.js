@@ -38,7 +38,7 @@ require("dotenv").config();
 
   console.log("🏢 Found organizations:", orgs.length);
 
-  const allTenders = {};
+  const wbTenders = {};
 
   for (const org of orgs) {
     if (!org.link) continue;
@@ -73,11 +73,11 @@ require("dotenv").config();
         org.org
       );
 
-      allTenders[org.org] = tenders;
+      wbTenders[org.org] = tenders;
       console.log(`✅ Scraped ${tenders.length} tenders from ${org.org}`);
     } catch (err) {
       console.warn(`⚠️ Failed to scrape ${org.org}:`, err.message);
-      allTenders[org.org] = [];
+      wbTenders[org.org] = [];
     }
   }
 
@@ -89,8 +89,8 @@ require("dotenv").config();
     gist_id: gistId,
     description: "Latest WB tenders",
     files: {
-      "alltenders.json": {
-        content: JSON.stringify(allTenders, null, 2),
+      "wbTenders.json": {
+        content: JSON.stringify(wbTenders, null, 2),
       },
     },
     headers: {
