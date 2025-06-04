@@ -3,7 +3,6 @@ description: This workflow runs a Node.js script to scrape WB tender data daily.
 
 on:
   schedule:
-    # Runs every day at 8:00 AM UTC
     - cron: '30 5 * * *'
   workflow_dispatch:  # Optional: allows manual triggering from GitHub UI
 
@@ -30,4 +29,4 @@ jobs:
         env:
             TOKEN: ${{ secrets.TOKEN }}
             GIST_ID: ${{ secrets.GIST_ID }}
-        run: node scrape.js
+        run: node scrappers/wb-tender-scrapper.js
