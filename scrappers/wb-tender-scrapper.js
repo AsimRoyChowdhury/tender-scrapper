@@ -65,8 +65,8 @@ require("dotenv").config();
               return {
                 title,
                 tendernumber: tenderID,
-                lastdateofsub: cells[2]?.innerText.trim(),
-                dateofopening: cells[3]?.innerText.trim(),
+                dateofopening: cells[2]?.innerText.trim(),
+                lastdateofsub: cells[3]?.innerText.trim(),
               };
             })
             .filter(Boolean),
