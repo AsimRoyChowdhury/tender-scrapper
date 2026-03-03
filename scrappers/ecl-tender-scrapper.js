@@ -1,5 +1,5 @@
 const cheerio = require("cheerio");
-require("dotenv").config();
+require("dotenv").config({ path: "../.env" });
 
 
 async function fetchTenderLocations() {
@@ -89,21 +89,33 @@ async function fetchTenderLocations() {
   const token = process.env.TOKEN;
   const gistId = process.env.GIST_ID;
 
+  if (!gistId) {
+    console.error("❌ Error: GIST_ID is missing from your .env file");
+    return;
+  }
+
   const { Octokit } = await import("@octokit/core");
   const octokit = new Octokit({ auth: token });
 
-  await octokit.request("PATCH /gists/{gist_id}", {
-    gist_id: gistId,
-    description: "Latest ECL tenders",
-    files: {
-      "eclTenders.json": {
-        content: JSON.stringify(eclTenders, null, 2),
+  console.log(`Updating Gist: ${gistId}...`);
+
+  try {
+    await octokit.request("PATCH /gists/{gist_id}", {
+      gist_id: gistId, // This maps to {gist_id} in the string above
+      description: "Latest ECL tenders",
+      files: {
+        "eclTenders.json": {
+          content: JSON.stringify(eclTenders, null, 2),
+        },
       },
-    },
-    headers: {
-      "X-GitHub-Api-Version": "2022-11-28",
-    },
-  });
+      headers: {
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+    });
+    console.log("✅ Gist updated successfully");
+  } catch (error) {
+    console.error("❌ Gist Update Failed:", error.message);
+  }
 
   console.log("✅ Gist updated successfully");
 })();
