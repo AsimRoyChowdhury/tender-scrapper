@@ -26,11 +26,11 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Run run_scrappers_parallely.js
+      - name: Run run_scrappers.js
         env:
           # Pulling all your Appwrite credentials from GitHub Secrets
           APPWRITE_ENDPOINT: ${{ secrets.APPWRITE_ENDPOINT }}
           APPWRITE_PROJECT_ID: ${{ secrets.APPWRITE_PROJECT_ID }}
           APPWRITE_API_KEY: ${{ secrets.APPWRITE_API_KEY }}
           APPWRITE_BUCKET_ID: ${{ secrets.APPWRITE_BUCKET_ID }}
-        run: node run_scrappers_parallely.js
+        run: node run_scrappers.js
